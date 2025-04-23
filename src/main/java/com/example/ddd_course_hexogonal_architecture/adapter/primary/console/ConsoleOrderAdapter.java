@@ -72,15 +72,15 @@ public class ConsoleOrderAdapter {
 
     private void createOrder() {
         List<Supplier> suppliers = List.of(
-                new Supplier("1", "Acme Supplies", "acme@example.com"),
-                new Supplier("2", "Global Foods", "global@example.com"),
-                new Supplier("3", "FreshFarm", "farm@example.com")
+                new Supplier("1", "Бабушка Зоя (дача)", "zoya1957@example.com"),
+                new Supplier("2", "Мясокомбинат 'Потрошки'", "myasoooo@example.com"),
+                new Supplier("3", "Пятёрочка просрочка", "5chka@example.com")
         );
         List<Product> products = List.of(
-                new Product("P1", "Cheese", "kg"),
-                new Product("P2", "Butter", "kg"),
-                new Product("P3", "Lettuce", "pcs"),
-                new Product("P4", "Tomato", "kg")
+                new Product("P1", "Сыр", "кг"),
+                new Product("P2", "Масло", "кг"),
+                new Product("P3", "Салат", "шт"),
+                new Product("P4", "Помидор", "кг")
         );
 
         System.out.println("Выберите поставщика:");
