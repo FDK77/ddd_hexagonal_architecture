@@ -1,14 +1,12 @@
 package com.example.ddd_course_hexogonal_architecture.adapter.primary.console;
 
-import com.example.ddd_course_hexogonal_architecture.domain.model.Forecast;
-import com.example.ddd_course_hexogonal_architecture.domain.model.Order;
-import com.example.ddd_course_hexogonal_architecture.domain.model.OrderStatus;
-import com.example.ddd_course_hexogonal_architecture.domain.model.ProductForecast;
+import com.example.ddd_course_hexogonal_architecture.domain.model.*;
 import com.example.ddd_course_hexogonal_architecture.domain.port.primary.OrderServicePort;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.UUID;
 
 public class ConsoleOrderAdapter {
     private final OrderServicePort service;
@@ -23,117 +21,142 @@ public class ConsoleOrderAdapter {
         do {
             showMenu();
             choice = Integer.parseInt(scanner.nextLine());
-            try {
-                handle(choice);
-            } catch (Exception e) {
-                System.out.println("Ошибка: " + e.getMessage());
-            }
+            handle(choice);
         } while (choice != 0);
     }
 
     private void showMenu() {
-        System.out.println("\n=== Управление заказами поставщикам ===");
-        System.out.println("1. Создать заказ по прогнозу");
+        System.out.println();
+        System.out.println("=== Управление заказами поставщикам ===");
+        System.out.println("1. Создать заказ");
         System.out.println("2. Отправить заказ");
         System.out.println("3. Подтвердить заказ");
-        System.out.println("4. Отметить заказ в пути");
-        System.out.println("5. Проверить статус заказа");
-        System.out.println("6. Принять поставку и провести контроль качества");
-        System.out.println("7. Показать все заказы");
+        System.out.println("4. Отметить доставку");
+        System.out.println("5. Контроль качества");
+        System.out.println("6. Проверить статус");
+        System.out.println("7. Список всех заказов");
         System.out.println("0. Выход");
-        System.out.print("Выберите действие: ");
+        System.out.print("> ");
     }
 
     private void handle(int choice) {
         switch (choice) {
-            case 1: createOrder(); break;
-            case 2: sendOrder(); break;
-            case 3: confirmOrder(); break;
-            case 4: markInTransit(); break;
-            case 5: checkStatus(); break;
-            case 6: receiveDelivery(); break;
-            case 7: listAllOrders(); break;
-            case 0: System.out.println("Выход из приложения."); break;
-            default: System.out.println("Неверный выбор. Попробуйте снова.");
+            case 1:
+                createOrder();
+                break;
+            case 2:
+                sendOrder();
+                break;
+            case 3:
+                confirmOrder();
+                break;
+            case 4:
+                deliverOrder();
+                break;
+            case 5:
+                qualityCheck();
+                break;
+            case 6:
+                showStatus();
+                break;
+            case 7:
+                listOrders();
+                break;
+            case 0:
+                System.out.println("Выход из приложения.");
+                break;
+            default:
+                System.out.println("Неверный выбор. Повторите.");
         }
     }
 
     private void createOrder() {
-        System.out.print("Идентификатор прогноза: ");
-        String forecastId = scanner.nextLine();
-        System.out.print("Количество позиций: ");
-        int n = Integer.parseInt(scanner.nextLine());
-        List<ProductForecast> items = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            System.out.print("Идентификатор продукта: ");
-            String pid = scanner.nextLine();
-            System.out.print("Количество: ");
-            int qty;
-            while (true) {
-                String input = scanner.nextLine().trim();
-                if (input.isEmpty()) {
-                    System.out.print("Введите корректное количество: ");
-                    continue;
-                }
-                try {
-                    qty = Integer.parseInt(input);
-                    break;
-                } catch (NumberFormatException e) {
-                    System.out.print("Неверный формат числа. Повторите ввод: ");
-                }
-            }
-            items.add(new ProductForecast(pid, qty));
+        List<Supplier> suppliers = List.of(
+                new Supplier("1", "Acme Supplies", "acme@example.com"),
+                new Supplier("2", "Global Foods", "global@example.com"),
+                new Supplier("3", "FreshFarm", "farm@example.com")
+        );
+        List<Product> products = List.of(
+                new Product("P1", "Cheese", "kg"),
+                new Product("P2", "Butter", "kg"),
+                new Product("P3", "Lettuce", "pcs"),
+                new Product("P4", "Tomato", "kg")
+        );
+
+        System.out.println("Выберите поставщика:");
+        for (int i = 0; i < suppliers.size(); i++) {
+            System.out.println((i + 1) + ") " + suppliers.get(i));
         }
-        Order order = service.createOrder(new Forecast(forecastId, items));
-        System.out.println("Заказ создан, его ID: " + order.getOrderId());
+        int supIdx = Integer.parseInt(scanner.nextLine()) - 1;
+        Supplier chosenSupplier = suppliers.get(supIdx);
+
+        String forecastId = UUID.randomUUID().toString();
+        System.out.print("Количество позиций: ");
+        int itemCount = Integer.parseInt(scanner.nextLine());
+
+        Forecast forecast = new Forecast(forecastId, chosenSupplier, new ArrayList<>());
+        for (int i = 0; i < itemCount; i++) {
+            System.out.println("Выберите продукт:");
+            for (int j = 0; j < products.size(); j++) {
+                System.out.println((j + 1) + ") " + products.get(j));
+            }
+            int prodIdx = Integer.parseInt(scanner.nextLine()) - 1;
+            Product chosenProduct = products.get(prodIdx);
+            System.out.print("Количество: ");
+            int qty = Integer.parseInt(scanner.nextLine());
+            forecast.getItems().add(new LineItem(chosenProduct, qty));
+        }
+
+        Order order = service.createOrder(forecast);
+        System.out.println("Создан заказ: " + order.getId());
     }
 
+
     private void sendOrder() {
-        System.out.print("Идентификатор заказа: ");
+        System.out.print("ID заказа: ");
         String id = scanner.nextLine();
         service.sendOrder(id);
         System.out.println("Заказ отправлен поставщику.");
     }
 
     private void confirmOrder() {
-        System.out.print("Идентификатор заказа: ");
+        System.out.print("ID заказа: ");
         String id = scanner.nextLine();
-        service.receiveConfirmation(id);
-        System.out.println("Заказ подтверждён поставщиком.");
+        System.out.print("Код подтверждения: ");
+        String code = scanner.nextLine();
+        service.confirmOrder(id, code);
+        System.out.println("Заказ подтверждён.");
     }
 
-    private void markInTransit() {
-        System.out.print("Идентификатор заказа: ");
+    private void deliverOrder() {
+        System.out.print("ID заказа: ");
         String id = scanner.nextLine();
-        service.markInTransit(id);
-        System.out.println("Заказ находится в пути.");
+        service.deliverOrder(id);
+        System.out.println("Заказ доставлен.");
     }
 
-    private void checkStatus() {
-        System.out.print("Идентификатор заказа: ");
+    private void qualityCheck() {
+        System.out.print("ID заказа: ");
         String id = scanner.nextLine();
-        OrderStatus status = service.getStatus(id);
-        System.out.println("Текущий статус заказа: " + status);
+        System.out.print("Качество OK? (true/false): ");
+        boolean passed = Boolean.parseBoolean(scanner.nextLine());
+        service.qualityCheck(id, passed);
+        System.out.println(passed ? "Заказ принят." : "Заказ возвращён.");
     }
 
-    private void receiveDelivery() {
-        System.out.print("Идентификатор заказа: ");
+    private void showStatus() {
+        System.out.print("ID заказа: ");
         String id = scanner.nextLine();
-        System.out.print("Качество в порядке? (true/false): ");
-        boolean ok = Boolean.parseBoolean(scanner.nextLine());
-        service.acceptDelivery(id, ok);
-        System.out.println(ok ? "Поставка принята и качество подтверждено." : "Поставка возвращена из‑за проблем с качеством.");
+        Status status = service.getStatus(id);
+        System.out.println("Текущий статус: " + status);
     }
 
-    private void listAllOrders() {
+    private void listOrders() {
         List<Order> orders = service.listOrders();
         if (orders.isEmpty()) {
-            System.out.println("Нет созданных заказов.");
+            System.out.println("Нет заказов.");
         } else {
-            System.out.println("\n=== Все заказы ===");
-            for (Order o : orders) {
-                System.out.println(o);
-            }
+            orders.forEach(System.out::println);
         }
     }
 }

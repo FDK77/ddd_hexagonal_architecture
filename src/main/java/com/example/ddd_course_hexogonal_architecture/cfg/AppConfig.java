@@ -11,27 +11,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class AppConfig {
-
-    @Bean
-    public OrderRepository orderRepository() {
-        return new InMemoryOrderRepository();
-    }
-
-    @Bean
-    public SupplierNotificationPort supplierNotificationPort() {
-        return new ConsoleNotificationAdapter();
-    }
-
-    @Bean
-    public OrderServicePort orderServicePort(
-            OrderRepository repo,
-            SupplierNotificationPort notifier) {
-        return new OrderService(repo, notifier);
-    }
-
-    @Bean
-    public ConsoleOrderAdapter consoleOrderAdapter(OrderServicePort service) {
-        return new ConsoleOrderAdapter(service);
-    }
+public class AppConfig{
+    @Bean public OrderRepository orderRepo(){return new InMemoryOrderRepository();}
+    @Bean public SupplierNotificationPort notifier(){return new ConsoleNotificationAdapter();}
+    @Bean public OrderServicePort orderService(OrderRepository r,SupplierNotificationPort n){return new OrderService(r,n);}
+    @Bean public ConsoleOrderAdapter console(OrderServicePort s){return new ConsoleOrderAdapter(s);}
 }

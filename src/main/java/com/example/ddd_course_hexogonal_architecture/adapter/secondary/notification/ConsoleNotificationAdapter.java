@@ -4,8 +4,7 @@ import com.example.ddd_course_hexogonal_architecture.domain.model.Order;
 import com.example.ddd_course_hexogonal_architecture.domain.port.secondary.SupplierNotificationPort;
 
 public class ConsoleNotificationAdapter implements SupplierNotificationPort {
-    @Override
-    public void notifySupplier(Order order) {
-        System.out.println("[NOTIFY] Supplier notified for order " + order.getOrderId());
+    public void notifySupplier(Order o) {
+        System.out.println("[Уведомление] Заказ отправлен: " + o.getId());
     }
 }

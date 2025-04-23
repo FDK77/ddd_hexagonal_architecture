@@ -1,78 +1,59 @@
 package com.example.ddd_course_hexogonal_architecture.domain.model;
 
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 public class Order {
-    private final String orderId;
-    private final List<ProductForecast> items;
-    private OrderStatus status;
+    private static long counter = 1;
+    private final String id;
+    private final Supplier supplier;
+    private final List<LineItem> items = new ArrayList<>();
+    private Status status;
     private final LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime confirmedAt;
+    private LocalDateTime deliveredAt;
+    private String confirmationCode;
+    private boolean qualityPassed;
 
-    public Order(List<ProductForecast> items) {
-        this.orderId = UUID.randomUUID().toString();
-        this.items = items;
-        this.status = OrderStatus.CREATED;
+    public Order(Supplier supplier) {
+        this.id = "SO-" + (counter++);
+        this.supplier = supplier;
+        this.status = Status.DRAFT;
         this.createdAt = LocalDateTime.now();
-        this.updatedAt = createdAt;
     }
+    public String getId() { return id; }
+    public Supplier getSupplier() { return supplier; }
+    public List<LineItem> getItems() { return new ArrayList<>(items); }
+    public Status getStatus() { return status; }
+    public boolean isQualityPassed() { return qualityPassed; }
 
-    public String getOrderId() { return orderId; }
-    public List<ProductForecast> getItems() { return items; }
-    public OrderStatus getStatus() { return status; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-
-    private void ensureStatus(OrderStatus required) {
-        if (this.status != required) {
-            throw new IllegalStateException(
-                    "Order must be " + required + " to invoke this operation (current: " + status + ")");
-        }
+    public void addItem(LineItem li) {
+        if (status != Status.DRAFT)
+            throw new IllegalStateException("Нельзя менять заказ в статусе " + status);
+        items.add(li);
     }
-
     public void send() {
-        ensureStatus(OrderStatus.CREATED);
-        status = OrderStatus.SENT;
-        updatedAt = LocalDateTime.now();
+        if (items.isEmpty()) throw new IllegalStateException("Пустой заказ");
+        status = Status.SENT;
     }
-
-    public void confirm() {
-        ensureStatus(OrderStatus.SENT);
-        status = OrderStatus.CONFIRMED;
-        updatedAt = LocalDateTime.now();
+    public void confirm(String code) {
+        if (status != Status.SENT) throw new IllegalStateException();
+        this.confirmedAt = LocalDateTime.now();
+        this.confirmationCode = code;
+        status = Status.CONFIRMED;
     }
-
-    public void markInTransit() {
-        ensureStatus(OrderStatus.CONFIRMED);
-        status = OrderStatus.IN_TRANSIT;
-        updatedAt = LocalDateTime.now();
+    public void deliver() {
+        if (status != Status.CONFIRMED) throw new IllegalStateException();
+        this.deliveredAt = LocalDateTime.now();
+        status = Status.DELIVERED;
     }
-
-    public void receive() {
-        ensureStatus(OrderStatus.IN_TRANSIT);
-        status = OrderStatus.RECEIVED;
-        updatedAt = LocalDateTime.now();
+    public void qualityCheck(boolean passed) {
+        if (status != Status.DELIVERED) throw new IllegalStateException();
+        this.qualityPassed = passed;
+        status = passed ? Status.ACCEPTED : Status.RETURNED;
     }
-
-    public void qualityCheck(boolean ok) {
-        ensureStatus(OrderStatus.RECEIVED);
-        status = ok ? OrderStatus.QUALITY_CHECKED : OrderStatus.RETURNED;
-        updatedAt = LocalDateTime.now();
-    }
-
-    @Override
-    public String toString() {
-        return "Order{" +
-                "id='" + orderId + '\'' +
-                ", status=" + status +
-                ", items=" + items +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
+    @Override public String toString() {
+        return "SupplierOrder{" + id + ", sup=" + supplier + ", items=" + items + ", status=" + status + ", qPassed=" + qualityPassed + '}';
     }
 }
